@@ -51,7 +51,7 @@ def processar_faturas():
     else:
         print("Nenhuma inconsistência encontrada.")
 
-    arquivo_saida = DIRETORIO_ATUAL / "resultado" / "resultado.json"
+    arquivo_saida = DIRETORIO_ATUAL / "resultado.json"
 
     with arquivo_saida.open("w", encoding="utf-8") as arquivo:
         json.dump(faturas, arquivo, ensure_ascii=False, indent=4, default=str)
