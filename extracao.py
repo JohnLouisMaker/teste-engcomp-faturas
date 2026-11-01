@@ -64,16 +64,19 @@ def extrair_fatura():
 
             if linha_formatada.startswith(("NOME", "CLIENTE", "TITULAR")):
                 resultado_regex = re.search(PADRAO_CAMPO, linha_formatada)
+
                 if resultado_regex:
                     fatura["cliente"] = resultado_regex.group(1).strip()
 
             if linha_formatada.startswith(("CPF/CNPJ", "CNPJ/CPF", "DOCUMENTO")):
                 resultado_regex = re.search(rf"{PADRAO_CNPJ}|{PADRAO_CPF}", linha_formatada)
+
                 if resultado_regex:
                     fatura["documento"] = resultado_regex.group()
 
             if linha_formatada.startswith(("UNIDADE CONSUMIDORA", "INSTALACAO", "NO DA INSTALACAO")):
                 resultado_regex = re.search(PADRAO_CAMPO, linha_formatada)
+
                 if resultado_regex:
                     fatura["unidade_consumidora"] = resultado_regex.group(1).strip()
 
@@ -90,30 +93,41 @@ def extrair_fatura():
                 )
             ):
                 resultado_regex = re.search(PADRAO_CAMPO, linha_formatada)
+
                 if resultado_regex:
-                    mes, ano = resultado_regex.group(1).strip().split("/")
-                    mes_formatado = MESES.get(mes, mes)
-                    fatura["referencia"] = f"{ano}-{mes_formatado}"
+                    partes = resultado_regex.group(1).strip().split("/")
+
+                    if len(partes) == 2:
+                        mes, ano = partes
+                        mes_formatado = MESES.get(mes, mes)
+                        fatura["referencia"] = f"{ano}-{mes_formatado}"
 
             if linha_formatada.startswith(("DATA DE VENCIMENTO", "DATA VENCIMENTO", "VENCIMENTO")):
                 resultado_regex = re.search(PADRAO_CAMPO, linha_formatada)
+
                 if resultado_regex:
-                    dia, mes, ano = resultado_regex.group(1).strip().split("/")
-                    mes_formatado = MESES.get(mes, mes)
-                    fatura["vencimento"] = f"{ano}-{mes_formatado}-{dia}"
+                    partes = resultado_regex.group(1).strip().split("/")
+
+                    if len(partes) == 3:
+                        dia, mes, ano = partes
+                        mes_formatado = MESES.get(mes, mes)
+                        fatura["vencimento"] = f"{ano}-{mes_formatado}-{dia}"
 
             if linha_formatada.startswith(("LEITURA ANTERIOR", "ANTERIOR", "DATA ANTERIOR")):
                 resultado_regex = re.search(PADRAO_KWH, linha_formatada)
+
                 if resultado_regex:
                     fatura["leitura_anterior"] = int(resultado_regex.group(1).replace(".", ""))
 
             if linha_formatada.startswith(("LEITURA ATUAL", "ATUAL", "DATA ATUAL")):
                 resultado_regex = re.search(PADRAO_KWH, linha_formatada)
+
                 if resultado_regex:
                     fatura["leitura_atual"] = int(resultado_regex.group(1).replace(".", ""))
 
             if linha_formatada.startswith(("CONSUMO FATURADO", "CONSUMO.:", "CONSUMO DO MES")):
                 resultado_regex = re.search(PADRAO_KWH, linha_formatada)
+
                 if resultado_regex:
                     fatura["consumo_kwh"] = int(resultado_regex.group(1).replace(".", ""))
 
@@ -130,6 +144,7 @@ def extrair_fatura():
             if dentro_de_faturamento:
                 if linha_formatada.startswith(("TOTAL A PAGAR", "TOTAL DA FATURA", "VALOR TOTAL DA FATURA")):
                     resultado_regex = re.search(PADRAO_MOEDA, linha_formatada)
+
                     if resultado_regex:
                         valor_formatado = resultado_regex.group()
                         fatura["valor_total"] = Decimal(valor_formatado.replace(".", "").replace(",", "."))
@@ -138,6 +153,7 @@ def extrair_fatura():
                     continue
 
                 valores_encontrados = re.findall(PADRAO_MOEDA, linha_formatada)
+
                 if valores_encontrados:
                     valor_formatado = valores_encontrados[-1]
                     valor_decimal = Decimal(valor_formatado.replace(".", "").replace(",", "."))
@@ -145,12 +161,10 @@ def extrair_fatura():
 
             if linha_formatada.startswith(("BANDEIRA TARIFARIA", "BANDEIRA:")):
                 resultado_regex = re.search(PADRAO_CAMPO, linha_formatada)
+
                 if resultado_regex:
                     fatura["bandeira"] = resultado_regex.group(1).strip()
 
         fatura_formatada.append(fatura)
 
     return fatura_formatada
-
-
-print(extrair_fatura())
