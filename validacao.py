@@ -1,7 +1,5 @@
 from decimal import Decimal
 
-from extracao import extrair_fatura
-
 
 def validar_faturas(faturas):
     inconsistencias = []
@@ -25,17 +23,29 @@ def validar_faturas(faturas):
         fatura_valida = True
 
         for campo in campos_obrigatorios:
-            resultado_campo = fatura.get(campo)
+            valor_campo = fatura.get(campo)
 
-            if resultado_campo is None or resultado_campo == "":
-                inconsistencias.append(f"CAMPO FALTANDO: {campo} no {fatura['arquivo']}")
+            if valor_campo is None or valor_campo == "":
+                inconsistencias.append(
+                    {"arquivo": fatura.get("arquivo"), "motivo": f"Campo obrigatório ausente: {campo}"}
+                )
                 fatura_valida = False
 
         if fatura.get("valor_total") is not None and fatura.get("itens") is not None:
             soma_itens = sum(fatura["itens"])
+            diferenca = fatura["valor_total"] - soma_itens
 
-            if abs(soma_itens - fatura["valor_total"]) > Decimal("0.01"):
-                inconsistencias.append({"arquivo": fatura["arquivo"], "motivo": "INCONSISTÊNCIA NO CÁLCULO"})
+            if abs(diferenca) > Decimal("0.01"):
+                inconsistencias.append(
+                    {
+                        "arquivo": fatura.get("arquivo"),
+                        "motivo": (
+                            f"Divergência de R$ {abs(diferenca):.2f} entre a soma dos itens e o total declarado."
+                            f"\nSoma dos itens: R$ {soma_itens:.2f}"
+                            f"\nTotal declarado: R$ {fatura['valor_total']:.2f}"
+                        ),
+                    }
+                )
                 fatura_valida = False
 
         if (
@@ -46,15 +56,18 @@ def validar_faturas(faturas):
             calculo_consumo = fatura["leitura_atual"] - fatura["leitura_anterior"]
 
             if calculo_consumo != fatura["consumo_kwh"]:
-                inconsistencias.append(f"INCONSISTÊNCIA NA LEITURA: {fatura['arquivo']}")
+                inconsistencias.append(
+                    {
+                        "arquivo": fatura.get("arquivo"),
+                        "motivo": (
+                            f"Consumo informado ({fatura['consumo_kwh']} kWh) é diferente do cálculo realizado."
+                            f"\nleitura atual - anterior ({calculo_consumo} kWh)"
+                        ),
+                    }
+                )
                 fatura_valida = False
 
         if fatura_valida:
             validadas.append(fatura)
 
     return validadas, inconsistencias
-
-
-resultado = extrair_fatura()
-resultado_formatado = validar_faturas(resultado)
-print(resultado_formatado)
