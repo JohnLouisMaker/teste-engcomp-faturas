@@ -35,7 +35,7 @@ def validar_faturas(faturas):
             soma_itens = sum(fatura["itens"])
 
             if abs(soma_itens - fatura["valor_total"]) > Decimal("0.01"):
-                inconsistencias.append(f"INCONSISTÊNCIA NO CÁLCULO: {fatura['arquivo']}")
+                inconsistencias.append({"arquivo": fatura["arquivo"], "motivo": "INCONSISTÊNCIA NO CÁLCULO"})
                 fatura_valida = False
 
         if (
